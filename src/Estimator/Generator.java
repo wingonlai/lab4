@@ -15,14 +15,15 @@ public class Generator implements Runnable {
 	private int nPacketsPerTrain;
 	private int nPacketSize;
 	private int nGap;
-	
+	private long[] timeStamp;
 	public Generator(int BlackBox, int Estimator, int PacketsInTrain, int PacketSize, int Gap)
 	{
-		nBlackBoxPort = 4444;
-		nEstimatorPort = 5555;
+		nBlackBoxPort = BlackBox;
+		nEstimatorPort = Estimator;
 		nPacketsPerTrain = PacketsInTrain;
 		nPacketSize = PacketSize;
 		nGap = Gap;
+		timeStamp = new long[PacketsInTrain];
 	}
 	
 	private void Wait(long nLastSentTime, boolean bWait)
@@ -43,18 +44,20 @@ public class Generator implements Runnable {
 			int nSent = 0;
 			byte[] buf = new byte[nPacketSize];
 			System.arraycopy(Utilities.toByteArray(nEstimatorPort),2,buf,0,2);
-			InetAddress addr = InetAddress.getByName("localhost");
+			InetAddress addr = InetAddress.getByName("127.0.0.1");
 			DatagramSocket socket = new DatagramSocket();
 			System.out.println("start sending!");
 			long nLastSentTime = -1;
 			while(nSent < nPacketsPerTrain)
 			{
+				System.arraycopy(Utilities.toByteArray(nSent),2,buf,2,2);
 				DatagramPacket packet =
 		                 new DatagramPacket(buf, buf.length, addr, nBlackBoxPort);
 				Wait(nLastSentTime, nSent != 0);
 				socket.send(packet);
 				long nOldLastSentTime = nLastSentTime;
 				nLastSentTime = System.nanoTime();
+				timeStamp[nSent] = nLastSentTime;
 				nSent++;
 				if(nOldLastSentTime == -1)
 					pout.println(nSent + "\t" + "0");

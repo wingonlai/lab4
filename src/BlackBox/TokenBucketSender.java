@@ -74,6 +74,7 @@ public class TokenBucketSender implements Runnable
 			}
 			packet.setPort(portNumber);
 			socket.send(packet);
+			System.out.println("BlackBox replied");
 		} 
 		catch (IOException e) 
 		{
@@ -146,7 +147,7 @@ public class TokenBucketSender implements Runnable
 			}
 			// there are no packets in buffer to send. Wait for one to arrive to buffer.
 			else
-			{				
+			{	
 				try
 				{
 					synchronized (buffer)

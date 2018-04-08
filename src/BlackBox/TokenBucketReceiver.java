@@ -3,6 +3,8 @@ package BlackBox;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
+import Estimator.Utilities;
+
 
 /**
  * Listens on specified port for incoming packets.
@@ -55,10 +57,11 @@ public class TokenBucketReceiver implements Runnable
 				byte[] buf = new byte[Buffer.MAX_PACKET_SIZE];
 				DatagramPacket packet = new DatagramPacket(buf, buf.length);
 
-				socket.receive(packet);	
+				socket.receive(packet);
 				int noTokens = bucket.getNoTokens();
 				long bufferSize = buffer.getSizeInBytes();
-						
+				int portNumber = Utilities.fromByteArray(packet.getData(), 0, 2);
+				System.out.println("Packet received. Port: " + portNumber);
 				/*
 				 * Process packet.
 				 */

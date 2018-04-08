@@ -13,12 +13,14 @@ public class Sink implements Runnable {
 	private int nEstimatorPort;
 	private int nToReceive;
 	private int nPacketSize;
+	private long[] timeStamp;
 	
 	public Sink(int Estimator, int nPackets, int PacketSize)
 	{
 		nEstimatorPort = Estimator;
 		nToReceive = nPackets;
 		nPacketSize = PacketSize;
+		timeStamp = new long[nToReceive];
 	}
 	
 	public void run() {
@@ -30,13 +32,14 @@ public class Sink implements Runnable {
 			DatagramSocket socket = new DatagramSocket(nEstimatorPort);
 			byte[] buf = new byte[nPacketSize];
 			DatagramPacket p = new DatagramPacket(buf, buf.length);
-			System.out.println("Waiting ...");
 			long nLastReceiveTime = -1;
 			while(nReceived < nToReceive)
 			{
+				System.out.println("Waiting for packet #" + (nReceived + 1) + " on port " + nEstimatorPort);
 				socket.receive(p);
 				long nOldLastReceiveTime = nLastReceiveTime;
 				nLastReceiveTime = System.nanoTime();
+				timeStamp[nReceived] = nLastReceiveTime;
 				nReceived++;
 				if(nOldLastReceiveTime == -1)
 					pout.println(nReceived + "\t" + "0");
@@ -46,7 +49,7 @@ public class Sink implements Runnable {
 			}
 			pout.close();
 			socket.close();
-			System.out.println("finished sending!");
+			System.out.println("finished receiving!");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (SocketException e) {
