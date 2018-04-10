@@ -1,0 +1,55 @@
+[Seqno, Agap] = textread('generator.data', '%d %d');
+[Seqno1, Dgap] = textread('sink.data', '%d %d');
+
+%N is number of packets in a train, L is packet size of the train
+N = 100;
+L = 400;
+
+%L = N * L;
+
+%Need to fill in this manually.
+Delay = 102065672562 - 100364844144 ;
+
+
+send = zeros(1,N);
+recv = zeros(1,N);
+send(1) = 0;
+recv(1) = 0 + Delay;
+for i = 2:N
+    send(i) = send(i-1) + Agap(i);
+    recv(i) = recv(i-1) + Dgap(i);
+end
+
+send = transpose(send);
+recv = transpose(recv);
+% LSR for arrival function
+arr = polyfit(send/1000,Seqno*L*8,1);
+% LSR for departure function
+dept = polyfit(recv/1000,Seqno1*L*8,1);
+
+%plotting packet train
+figure(1);
+plot(send/1000,Seqno*8*L,recv/1000,Seqno1*8*L);
+title('Arrival and Departure functions');
+ylabel('Accumulated Bits');
+xlabel('Time(ms)');
+
+% find the max backlog
+lines = findobj(gcf, 'type', 'line');
+CurveHandle1 = lines(1);
+CurveHandle2 = lines(2);
+x1 = get(CurveHandle1, 'XData');
+y1 = get(CurveHandle1, 'YData');
+x2 = get(CurveHandle2, 'XData');
+y2 = get(CurveHandle2, 'YData');
+projectedy2 = interp1(x2,y2,x1);
+[maxdist,maxidx] = max(abs(projectedy2-y2));
+[mindist,minidx] = min(abs(projectedy2-y2));
+fprintf(1,'Maximum backlog is %g bits at t = %g ms\n', maxdist, x1(maxidx));
+fprintf(1,'Arrival rate is %g kbps\n',arr(1));
+fprintf(1,'Departure rate is %g kbps * (t-%g ms)+%d bits\n',dept(1),recv(1)/1000,dept(2)+dept(1)*recv(1)/1000);
+% plot legend here to avoid screwing with the backlog code 
+% (it would detect > 2 lines)
+Delay = Delay / 1000;
+fprintf(1,'Delay is %g ms\n', Delay);
+legend('Arrivals','Departures');
